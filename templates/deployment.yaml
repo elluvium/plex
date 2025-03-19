@@ -70,10 +70,13 @@ spec:
             - name: transcode
               mountPath: /transcode
             {{- end }}
-            {{- range .Values.persistence.media }}
-            {{- if .enabled }}
-            - name: {{ .name }}
+            {{- if .Values.persistence.media.enabled }}
+            {{- range .Values.persistence.media.mounts }}
+            {{- if not (hasKey . "enabled") or .enabled }}
+            - name: media
               mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- if .Values.hardwareAcceleration.intel.enabled }}
@@ -112,17 +115,15 @@ spec:
             claimName: {{ include "plex.fullname" . }}-transcode
           {{- end }}
         {{- end }}
-        {{- range .Values.persistence.media }}
-        {{- if .enabled }}
-        - name: {{ .name }}
-          {{- if .existingClaim }}
+        {{- if .Values.persistence.media.enabled }}
+        - name: media
+          {{- if .Values.persistence.media.existingClaim }}
           persistentVolumeClaim:
-            claimName: {{ .existingClaim }}
+            claimName: {{ .Values.persistence.media.existingClaim }}
           {{- else }}
           persistentVolumeClaim:
-            claimName: {{ include "plex.fullname" $ }}-{{ .name }}
+            claimName: {{ include "plex.fullname" . }}-media
           {{- end }}
-        {{- end }}
         {{- end }}
         {{- if .Values.hardwareAcceleration.intel.enabled }}
         - name: dri

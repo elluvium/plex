@@ -73,29 +73,25 @@ persistence:
     existingClaim: ""
     storageClass: ""
     accessMode: ReadWriteOnce
-  # Media libraries - add or remove as needed
+  # Single media volume with subpaths for different media types
   media:
-    - name: movies
-      mountPath: /movies
-      enabled: true
-      size: 100Gi
-      existingClaim: ""
-      storageClass: ""
-      accessMode: ReadWriteOnce
-    - name: tv
-      mountPath: /tv
-      enabled: true
-      size: 100Gi
-      existingClaim: ""  
-      storageClass: ""
-      accessMode: ReadWriteOnce
-    - name: photos
-      mountPath: /photos
-      enabled: false
-      size: 50Gi
-      existingClaim: ""
-      storageClass: ""
-      accessMode: ReadWriteOnce
+    enabled: true
+    size: 200Gi
+    existingClaim: ""
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    # Paths to mount within the single media volume
+    mounts:
+      - name: movies
+        subPath: "movies"
+        mountPath: /movies
+      - name: tv
+        subPath: "tv"
+        mountPath: /tv
+      - name: photos
+        subPath: "photos" 
+        mountPath: /photos
+        enabled: false
   # Transcode directory (for temporary transcoding files)
   transcode:
     enabled: true

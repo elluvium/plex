@@ -36,25 +36,20 @@ spec:
 ---
 {{- end }}
 
-{{- range .Values.persistence.media }}
-{{- if and .enabled (not .existingClaim) }}
+{{- if and .Values.persistence.media.enabled (not .Values.persistence.media.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "plex.fullname" $ }}-{{ .name }}
+  name: {{ include "plex.fullname" . }}-media
   labels:
-    {{- include "plex.labels" $ | nindent 4 }}
+    {{- include "plex.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - {{ .accessMode | default "ReadWriteOnce" }}
-  {{- if .storageClass }}
-  storageClassName: {{ .storageClass }}
+    - {{ .Values.persistence.media.accessMode | default "ReadWriteOnce" }}
+  {{- if .Values.persistence.media.storageClass }}
+  storageClassName: {{ .Values.persistence.media.storageClass }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .size | default "100Gi" }}
-{{- if ne .name (last $.Values.persistence.media).name }}
----
-{{- end }}
-{{- end }}
+      storage: {{ .Values.persistence.media.size | default "200Gi" }}
 {{- end }}
