@@ -21,6 +21,12 @@ To install the chart with the release name `plex`:
 helm install plex ./plex-helm
 ```
 
+To install to a specific namespace:
+
+```bash
+helm install plex ./plex-helm --set namespace=media
+```
+
 The command deploys Plex Media Server on the Kubernetes cluster with default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
 ## Uninstalling the Chart
@@ -37,6 +43,7 @@ helm uninstall plex
 
 | Name                | Description                                                                  | Value         |
 | ------------------- | ---------------------------------------------------------------------------- | ------------- |
+| `namespace`         | Namespace to deploy all resources                                            | `default`     |
 | `nameOverride`      | String to partially override plex.fullname template                          | `""`          |
 | `fullnameOverride`  | String to fully override plex.fullname template                              | `""`          |
 | `replicaCount`      | Number of Plex replicas to deploy                                            | `1`           |
@@ -105,6 +112,47 @@ helm uninstall plex
 | `ingress.className`          | IngressClass that will be used                         | `""`        |
 | `ingress.hosts[0].host`      | Hostname to your Plex installation                     | `plex.local` |
 | `ingress.hosts[0].paths`     | Path within the URL structure                         | See values.yaml |
+
+## Namespace Configuration
+
+All resources created by this chart are deployed to the namespace specified in the `namespace` value. This allows for better organization and isolation of your Plex deployment.
+
+To deploy to a specific namespace:
+
+```yaml
+namespace: media-apps
+```
+
+The namespace must exist before deployment, or you can create it first:
+
+```bash
+kubectl create namespace media-apps
+helm install plex ./plex-helm --set namespace=media-apps
+```
+
+## Single PVC for Media
+
+This chart uses a single PVC for all media with subpaths for different media types:
+
+```yaml
+persistence:
+  media:
+    enabled: true
+    size: 200Gi
+    mounts:
+      - name: movies
+        subPath: "movies"
+        mountPath: /movies
+      - name: tv
+        subPath: "tv"
+        mountPath: /tv
+      # Add more media types as needed
+```
+
+This approach:
+- Simplifies storage management
+- Makes it easier to backup all media at once
+- Allows for more efficient use of storage
 
 ## Node Assignment
 

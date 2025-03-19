@@ -1,5 +1,8 @@
 # Default values for plex Helm chart
 
+# Namespace to deploy all resources
+namespace: default
+
 # Image configuration
 image:
   repository: lscr.io/linuxserver/plex

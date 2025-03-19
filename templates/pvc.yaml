@@ -3,6 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "plex.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "plex.labels" . | nindent 4 }}
 spec:
@@ -22,6 +23,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "plex.fullname" . }}-transcode
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "plex.labels" . | nindent 4 }}
 spec:
@@ -41,6 +43,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "plex.fullname" . }}-media
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "plex.labels" . | nindent 4 }}
 spec:

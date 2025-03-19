@@ -2,7 +2,7 @@ apiVersion: v2
 name: plex
 description: A Helm chart for Plex Media Server using LinuxServer.io's Docker image
 type: application
-version: 0.3.0
+version: 0.4.0
 appVersion: latest
 maintainers:
   - name: Your Name
