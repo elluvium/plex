@@ -69,15 +69,25 @@ helm uninstall plex
 
 ### Persistence parameters
 
-| Name                                | Description                                      | Value         |
-| ----------------------------------- | ------------------------------------------------ | ------------- |
-| `persistence.config.enabled`        | Enable config persistence                         | `true`        |
-| `persistence.config.size`           | Size of config volume                            | `20Gi`        |
-| `persistence.config.existingClaim`  | Use existing PVC for config                      | `""`          |
-| `persistence.transcode.enabled`     | Enable transcode directory persistence           | `true`        |
-| `persistence.transcode.size`        | Size of transcode volume                         | `20Gi`        |
-| `persistence.media[*].enabled`      | Enable media volume persistence                  | `true`        |
-| `persistence.media[*].size`         | Size of media volumes                            | `100Gi`       |
+| Name                             | Description                                             | Value         |
+| -------------------------------- | ------------------------------------------------------- | ------------- |
+| `persistence.config.enabled`     | Enable config persistence                                | `true`        |
+| `persistence.config.size`        | Size of config volume                                   | `20Gi`        |
+| `persistence.config.existingClaim` | Use existing PVC for config                          | `""`          |
+| `persistence.transcode.enabled`  | Enable transcode directory persistence                  | `true`        |
+| `persistence.transcode.size`     | Size of transcode volume                                | `20Gi`        |
+| `persistence.media.enabled`      | Enable single media volume persistence                  | `true`        |
+| `persistence.media.size`         | Size of single media volume                             | `200Gi`       |
+| `persistence.media.mounts`       | List of mount paths within the single media volume      | See values.yaml |
+
+### Node assignment parameters
+
+| Name                              | Description                                            | Value       |
+| --------------------------------- | ------------------------------------------------------ | ----------- |
+| `nodeAssignment.enabled`          | Enable node assignment for the deployment              | `false`     |
+| `nodeAssignment.nodeName`         | Node name to assign the pod to (e.g. "k8s-node-1")    | `""`        |
+| `nodeAssignment.useNodeSelector`  | Use nodeSelector instead of nodeName                   | `false`     |
+| `nodeAssignment.nodeSelector`     | Node selector labels to use if useNodeSelector=true    | `{}`        |
 
 ### Hardware Acceleration parameters
 
@@ -95,6 +105,32 @@ helm uninstall plex
 | `ingress.className`          | IngressClass that will be used                         | `""`        |
 | `ingress.hosts[0].host`      | Hostname to your Plex installation                     | `plex.local` |
 | `ingress.hosts[0].paths`     | Path within the URL structure                         | See values.yaml |
+
+## Node Assignment
+
+The chart supports assigning the Plex pod to a specific node in two ways:
+
+1. Using `nodeName` to directly assign to a specific node:
+```yaml
+nodeAssignment:
+  enabled: true
+  nodeName: "my-media-server-node"
+```
+
+2. Using `nodeSelector` for more flexible assignment:
+```yaml
+nodeAssignment:
+  enabled: true
+  useNodeSelector: true
+  nodeSelector:
+    kubernetes.io/hostname: my-node-name
+    disktype: ssd
+```
+
+This is particularly useful when:
+- Running Plex on a specific node with special hardware (like GPUs)
+- Ensuring media files are local to the node for performance
+- Isolating the media server to specific hardware
 
 ## Hardware Acceleration
 

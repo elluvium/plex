@@ -130,9 +130,19 @@ spec:
           hostPath:
             path: /dev/dri
         {{- end }}
+      {{- if .Values.nodeAssignment.enabled }}
+      {{- if .Values.nodeAssignment.nodeName }}
+      nodeName: {{ .Values.nodeAssignment.nodeName }}
+      {{- end }}
+      {{- if .Values.nodeAssignment.useNodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeAssignment.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- else }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with .Values.affinity }}
       affinity:

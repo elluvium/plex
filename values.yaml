@@ -131,9 +131,25 @@ securityContext:
   runAsGroup: 1000
   fsGroup: 1000
 
-# Node selector, tolerations and affinity
+# Node assignment
+nodeAssignment:
+  # Enable to stick deployment to specific node
+  enabled: false
+  # Node name to assign the pod to (e.g. "k8s-node-1")
+  nodeName: ""
+  # Alternative: use nodeSelector with custom labels
+  useNodeSelector: false
+  # Node selector labels (used only if useNodeSelector is true)
+  nodeSelector:
+    # kubernetes.io/hostname: my-node-name
+    # disktype: ssd
+    # gpu: "true"
+
+# Default node selector (used if nodeAssignment.enabled=false)
 nodeSelector: {}
+# Default tolerations
 tolerations: []
+# Default affinity
 affinity: {}
 
 # Ingress configuration
