@@ -1,0 +1,60 @@
+{{- if and .Values.persistence.config.enabled (not .Values.persistence.config.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "plex.fullname" . }}-config
+  labels:
+    {{- include "plex.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.config.accessMode | default "ReadWriteOnce" }}
+  {{- if .Values.persistence.config.storageClass }}
+  storageClassName: {{ .Values.persistence.config.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.config.size | default "20Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.persistence.transcode.enabled (not .Values.persistence.transcode.existingClaim) (not .Values.persistence.transcode.emptyDir.enabled) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "plex.fullname" . }}-transcode
+  labels:
+    {{- include "plex.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.transcode.accessMode | default "ReadWriteOnce" }}
+  {{- if .Values.persistence.transcode.storageClass }}
+  storageClassName: {{ .Values.persistence.transcode.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.transcode.size | default "20Gi" }}
+---
+{{- end }}
+
+{{- range .Values.persistence.media }}
+{{- if and .enabled (not .existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "plex.fullname" $ }}-{{ .name }}
+  labels:
+    {{- include "plex.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .accessMode | default "ReadWriteOnce" }}
+  {{- if .storageClass }}
+  storageClassName: {{ .storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .size | default "100Gi" }}
+{{- if ne .name (last $.Values.persistence.media).name }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

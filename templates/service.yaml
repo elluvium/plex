@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "plex.fullname" . }}
+  labels:
+    {{- include "plex.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.hostNetwork }}
+  # No service ports needed when using hostNetwork
+  ports:
+    - port: {{ .Values.service.webUIPort }}
+      targetPort: 32400
+      protocol: TCP
+      name: webui
+  {{- else }}
+  ports:
+    - port: {{ .Values.service.webUIPort }}
+      targetPort: 32400
+      protocol: TCP
+      name: webui
+    {{- range .Values.service.additionalPorts }}
+    - port: {{ .port }}
+      targetPort: {{ .port }}
+      protocol: {{ .protocol }}
+      name: {{ .name }}
+    {{- end }}
+  {{- end }}
+  selector:
+    {{- include "plex.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,158 @@
+# Default values for plex Helm chart
+
+# Image configuration
+image:
+  repository: lscr.io/linuxserver/plex
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Number of pods
+replicaCount: 1
+
+# Container naming
+nameOverride: ""
+fullnameOverride: ""
+
+# Environment variables
+env:
+  # User/Group settings
+  PUID: "1000"
+  PGID: "1000"
+  # Timezone
+  TZ: "Etc/UTC"
+  # Plex version to use
+  # - "docker": Let Docker handle the version (recommended)
+  # - "latest": Latest version you're entitled to
+  # - "public": Latest public version (for Plex Pass users wanting public releases)
+  # - Specific version (e.g. "1.29.0.6244-819d3678c")
+  VERSION: "docker"
+  # Optional Plex claim token from https://plex.tv/claim (expires after 4 minutes)
+  PLEX_CLAIM: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  # Whether to use host network mode
+  hostNetwork: false
+  # Standard ports
+  webUIPort: 32400
+  # Additional ports (only used if hostNetwork is false)
+  additionalPorts:
+    - name: dlna-udp
+      port: 1900
+      protocol: UDP
+    - name: bonjour-udp
+      port: 5353
+      protocol: UDP
+    - name: companion
+      port: 8324
+      protocol: TCP
+    - name: discovery1-udp
+      port: 32410
+      protocol: UDP
+    - name: discovery2-udp
+      port: 32412
+      protocol: UDP
+    - name: discovery3-udp
+      port: 32413
+      protocol: UDP
+    - name: discovery4-udp
+      port: 32414
+      protocol: UDP
+    - name: dlna-tcp
+      port: 32469
+      protocol: TCP
+
+# Storage config
+persistence:
+  # Main configuration volume
+  config:
+    enabled: true
+    size: 20Gi
+    # Specify an existing PVC to use instead of creating a new one
+    existingClaim: ""
+    storageClass: ""
+    accessMode: ReadWriteOnce
+  # Media libraries - add or remove as needed
+  media:
+    - name: movies
+      mountPath: /movies
+      enabled: true
+      size: 100Gi
+      existingClaim: ""
+      storageClass: ""
+      accessMode: ReadWriteOnce
+    - name: tv
+      mountPath: /tv
+      enabled: true
+      size: 100Gi
+      existingClaim: ""  
+      storageClass: ""
+      accessMode: ReadWriteOnce
+    - name: photos
+      mountPath: /photos
+      enabled: false
+      size: 50Gi
+      existingClaim: ""
+      storageClass: ""
+      accessMode: ReadWriteOnce
+  # Transcode directory (for temporary transcoding files)
+  transcode:
+    enabled: true
+    size: 20Gi
+    existingClaim: ""
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    # You can use memory-based storage like tmpfs for better performance
+    emptyDir:
+      enabled: false
+      medium: "Memory"
+      sizeLimit: "10Gi"
+
+# Hardware acceleration
+hardwareAcceleration:
+  # Intel/AMD GPU passthrough
+  intel:
+    enabled: false
+  # Nvidia GPU passthrough
+  nvidia:
+    enabled: false
+    runtime: "nvidia"
+    visibleDevices: "all" # Can be specific GPU UUID
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 4
+    memory: 8Gi
+  requests:
+    cpu: 2
+    memory: 4Gi
+
+# Pod Security Context
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Node selector, tolerations and affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: plex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: plex-tls
+  #    hosts:
+  #      - plex.local

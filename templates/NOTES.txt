@@ -1,0 +1,69 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your Plex Media Server is now being deployed. It may take a few minutes for it to start.
+
+{{- if .Values.service.hostNetwork }}
+
+Since you're using host network mode, your Plex server will be accessible at:
+  http://<node-ip>:32400/web
+
+{{- else }}
+
+{{- if contains "ClusterIP" .Values.service.type }}
+To access the Plex web interface from within your Kubernetes cluster:
+
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "plex.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8888:$CONTAINER_PORT
+  echo "Visit http://127.0.0.1:8888/web to access the Plex web interface"
+
+{{- else if contains "NodePort" .Values.service.type }}
+
+To access the Plex web interface:
+
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "plex.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "Visit http://$NODE_IP:$NODE_PORT/web to access the Plex web interface"
+
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+To access the Plex web interface:
+
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "plex.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo "Visit http://$SERVICE_IP:{{ .Values.service.webUIPort }}/web to access the Plex web interface"
+  
+{{- else if contains "ExternalName" .Values.service.type }}
+
+To access the Plex web interface:
+
+  Visit http://{{ .Values.service.externalName }}:{{ .Values.service.webUIPort }}/web to access the Plex web interface"
+{{- end }}
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  Plex web interface is also available at: http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}web
+  {{- end }}
+{{- end }}
+{{- end }}
+
+First-time setup:
+1. If this is your first time using Plex, navigate to the web interface.
+2. Follow the setup wizard to create or sign in to your Plex account.
+3. Set up your media libraries by pointing to the mounted media directories inside the container:
+   - Movies: /movies
+   - TV Shows: /tv
+   {{- if index (first (where .Values.persistence.media "name" "photos" "enabled" true)) "enabled" }}
+   - Photos: /photos
+   {{- end }}
+
+For more details, visit the Plex documentation: https://support.plex.tv/articles/
+
+IMPORTANT:
+{{- if not .Values.env.PLEX_CLAIM }}
+- If you haven't claimed your server yet, you'll need to restart the pod with a valid claim token
+  from https://plex.tv/claim (tokens expire after 4 minutes).
+{{- end }}
+- If you're using the default setup, your media will be persisted as long as the PVCs exist.
+- If your cluster cannot access the internet directly, make sure you configure proper networking.

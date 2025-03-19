@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "plex.fullname" . }}
+  labels:
+    {{- include "plex.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "plex.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "plex.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      hostNetwork: {{ .Values.service.hostNetwork }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: "{{ .Values.env.PUID }}"
+            - name: PGID
+              value: "{{ .Values.env.PGID }}"
+            - name: TZ
+              value: "{{ .Values.env.TZ }}"
+            - name: VERSION
+              value: "{{ .Values.env.VERSION }}"
+            {{- if .Values.env.PLEX_CLAIM }}
+            - name: PLEX_CLAIM
+              value: "{{ .Values.env.PLEX_CLAIM }}"
+            {{- end }}
+            {{- if .Values.hardwareAcceleration.nvidia.enabled }}
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "{{ .Values.hardwareAcceleration.nvidia.visibleDevices }}"
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "all"
+            {{- end }}
+          ports:
+            - name: webui
+              containerPort: 32400
+              protocol: TCP
+            {{- if not .Values.service.hostNetwork }}
+            {{- range .Values.service.additionalPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+            {{- end }}
+            {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            {{- if .Values.persistence.transcode.enabled }}
+            - name: transcode
+              mountPath: /transcode
+            {{- end }}
+            {{- range .Values.persistence.media }}
+            {{- if .enabled }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.hardwareAcceleration.intel.enabled }}
+            - name: dri
+              mountPath: /dev/dri
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.hardwareAcceleration.nvidia.enabled }}
+          runtimeClassName: {{ .Values.hardwareAcceleration.nvidia.runtime }}
+          {{- end }}
+      volumes:
+        - name: config
+          {{- if .Values.persistence.config.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.config.existingClaim }}
+          {{- else if .Values.persistence.config.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "plex.fullname" . }}-config
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.persistence.transcode.enabled }}
+        - name: transcode
+          {{- if .Values.persistence.transcode.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.transcode.existingClaim }}
+          {{- else if .Values.persistence.transcode.emptyDir.enabled }}
+          emptyDir:
+            medium: {{ .Values.persistence.transcode.emptyDir.medium | quote }}
+            {{- if .Values.persistence.transcode.emptyDir.sizeLimit }}
+            sizeLimit: {{ .Values.persistence.transcode.emptyDir.sizeLimit }}
+            {{- end }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "plex.fullname" . }}-transcode
+          {{- end }}
+        {{- end }}
+        {{- range .Values.persistence.media }}
+        {{- if .enabled }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "plex.fullname" $ }}-{{ .name }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.hardwareAcceleration.intel.enabled }}
+        - name: dri
+          hostPath:
+            path: /dev/dri
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

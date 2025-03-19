@@ -1,0 +1,19 @@
+apiVersion: v2
+name: plex
+description: A Helm chart for Plex Media Server using LinuxServer.io's Docker image
+type: application
+version: 0.1.0
+appVersion: latest
+maintainers:
+  - name: Your Name
+    email: your.email@example.com
+keywords:
+  - plex
+  - media
+  - server
+  - streaming
+home: https://www.plex.tv/
+icon: https://www.plex.tv/wp-content/uploads/2018/01/pmp-icon-1.png
+sources:
+  - https://github.com/linuxserver/docker-plex
+  - https://hub.docker.com/r/linuxserver/plex
