@@ -55,7 +55,7 @@ First-time setup:
    - Movies: /movies
    - TV Shows: /tv
 {{- range .Values.persistence.media.mounts }}
-{{- if and (eq .subPath "photos") (not (hasKey . "enabled") or .enabled) }}
+{{- if and (eq .subPath "photos") (or (not (hasKey . "enabled")) .enabled) }}
    - Photos: /photos
 {{- end }}
 {{- end }}
