@@ -73,7 +73,7 @@ spec:
             {{- end }}
             {{- if .Values.persistence.media.enabled }}
             {{- range .Values.persistence.media.mounts }}
-            {{- if not (hasKey . "enabled") or .enabled }}
+            {{- if or (not (hasKey . "enabled")) .enabled }}
             - name: media
               mountPath: {{ .mountPath }}
               subPath: {{ .subPath }}
