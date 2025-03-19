@@ -1,6 +1,6 @@
 Thank you for installing {{ .Chart.Name }}!
 
-Your Plex Media Server is now being deployed. It may take a few minutes for it to start.
+Your Plex Media Server is now being deployed in namespace "{{ .Values.namespace }}". It may take a few minutes for it to start.
 
 {{- if .Values.service.hostNetwork }}
 
@@ -12,24 +12,24 @@ Since you're using host network mode, your Plex server will be accessible at:
 {{- if contains "ClusterIP" .Values.service.type }}
 To access the Plex web interface from within your Kubernetes cluster:
 
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "plex.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
-  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8888:$CONTAINER_PORT
+  export POD_NAME=$(kubectl get pods --namespace {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "plex.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Values.namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  kubectl --namespace {{ .Values.namespace }} port-forward $POD_NAME 8888:$CONTAINER_PORT
   echo "Visit http://127.0.0.1:8888/web to access the Plex web interface"
 
 {{- else if contains "NodePort" .Values.service.type }}
 
 To access the Plex web interface:
 
-  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "plex.fullname" . }})
-  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  export NODE_PORT=$(kubectl get --namespace {{ .Values.namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "plex.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Values.namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo "Visit http://$NODE_IP:$NODE_PORT/web to access the Plex web interface"
 
 {{- else if contains "LoadBalancer" .Values.service.type }}
 
 To access the Plex web interface:
 
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "plex.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Values.namespace }} {{ include "plex.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
   echo "Visit http://$SERVICE_IP:{{ .Values.service.webUIPort }}/web to access the Plex web interface"
   
 {{- else if contains "ExternalName" .Values.service.type }}
@@ -54,9 +54,11 @@ First-time setup:
 3. Set up your media libraries by pointing to the mounted media directories inside the container:
    - Movies: /movies
    - TV Shows: /tv
-   {{- if index (first (where .Values.persistence.media "name" "photos" "enabled" true)) "enabled" }}
+{{- range .Values.persistence.media.mounts }}
+{{- if and (eq .subPath "photos") (not (hasKey . "enabled") or .enabled) }}
    - Photos: /photos
-   {{- end }}
+{{- end }}
+{{- end }}
 
 For more details, visit the Plex documentation: https://support.plex.tv/articles/
 
